@@ -4,9 +4,9 @@ import React, { useEffect, useState } from "react";
 import { useWebContext } from "@context/auth";
 import { getCookie } from "@utils/cookies";
 import {
-	OpenInNew as ArrowRightIcon,
-	Storage as DatabaseIcon,
-	Search as SearchIcon
+    OpenInNew as ArrowRightIcon,
+    Storage as DatabaseIcon,
+    Search as SearchIcon
 } from "@mui/icons-material";
 import { Card } from "@components/ui/card";
 import { Input } from "@components/ui/input";
@@ -118,11 +118,11 @@ function ThemeList() {
                     <div className="flex flex-col sm:flex-row gap-4">
                         <div className="relative flex-1">
                             <SearchIcon className="absolute left-3 top-1/2 transform -translate-y-1/2 text-muted-foreground w-4 h-4" />
-                            <Input 
-                                placeholder="Search themes or authors..." 
-                                className="pl-10 h-10" 
-                                value={search} 
-                                onChange={(e) => setSearch(e.target.value)} 
+                            <Input
+                                placeholder="Search themes or authors..."
+                                className="pl-10 h-10"
+                                value={search}
+                                onChange={(e) => setSearch(e.target.value)}
                             />
                         </div>
                         <Select value={filter} onValueChange={setFilter}>
@@ -151,7 +151,7 @@ function ThemeList() {
                                 <div className="space-y-4 flex flex-col flex-grow">
                                     <div className="flex justify-between items-start gap-3">
                                         <h3 className="font-semibold text-lg text-foreground break-words flex-grow leading-tight">{theme.title}</h3>
-                                        <Badge 
+                                        <Badge
                                             variant={theme.state === "approved" ? "default" : theme.state === "rejected" ? "destructive" : "secondary"}
                                             className="flex-shrink-0 whitespace-nowrap"
                                         >

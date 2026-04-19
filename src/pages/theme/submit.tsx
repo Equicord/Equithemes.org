@@ -107,7 +107,10 @@ export default function SubmitPage() {
 
     function validateStep(step: number, data: typeof formData) {
         const newErrors: Record<string, string> = {};
-        if (step === 1 && data.title.trim().length < 3) newErrors.title = "Title must be longer than 3 characters.";
+        if (step === 1) {
+            if (data.title.trim().length < 3) newErrors.title = "Title must be longer than 3 characters.";
+            if (data.title.trim().length > 40) newErrors.title = "Title must be 40 characters or less.";
+        }
         if (step === 2 && !data.description.trim()) newErrors.description = "Description is required.";
         if (step === 3 && !data.file) newErrors.file = "Preview image is required.";
         if (step === 4) {
@@ -387,7 +390,7 @@ export default function SubmitPage() {
                 {!isLoading &&
                     (isAuthenticated ? (
                         <div className="container mx-auto px-2 md:px-6 py-10 max-w-6xl">
-                            
+
                             {isBanned && (
                                 <Alert className="mb-6 border-red-600/30 bg-red-500/10">
                                     <AlertDescription className="text-red-600">
@@ -403,7 +406,7 @@ export default function SubmitPage() {
                             </div>
 
                             <div className="grid grid-cols-1 lg:grid-cols-4 gap-8">
-                                
+
                                 <aside className="lg:col-span-1">
                                     <div className="sticky top-8 bg-card/80 border border-border rounded-2xl shadow-md p-6">
                                         <h2 className="font-semibold mb-6 text-lg">Progress</h2>
@@ -421,7 +424,7 @@ export default function SubmitPage() {
                                     </div>
                                 </aside>
 
-                                
+
                                 <main className="lg:col-span-3">
                                     {isBanned ? (
                                         <Card className="p-8 bg-card/90 border border-border rounded-2xl shadow-lg">
@@ -438,7 +441,7 @@ export default function SubmitPage() {
                                     ) : (
                                         <>
                                             <div className="space-y-8">
-                                                
+
                                                 {step === 1 && (
                                                     <Card className="p-8 bg-card/90 border border-border rounded-2xl shadow-lg">
                                                         <div className="mb-8">
@@ -461,7 +464,7 @@ export default function SubmitPage() {
                                                     </Card>
                                                 )}
 
-                                                
+
                                                 {step === 2 && (
                                                     <Card className="p-8 bg-card/90 border border-border rounded-2xl shadow-lg">
                                                         <div className="mb-8">
@@ -479,7 +482,7 @@ export default function SubmitPage() {
                                                     </Card>
                                                 )}
 
-                                                
+
                                                 {step === 3 && (
                                                     <Card className="p-8 bg-card/90 border border-border rounded-2xl shadow-lg">
                                                         <div className="mb-8">
@@ -487,7 +490,7 @@ export default function SubmitPage() {
                                                             <p className="text-muted-foreground">Upload a preview image or generate one from your theme URL. This helps users see what your theme looks like.</p>
                                                         </div>
                                                         <div className="space-y-6">
-                                                            
+
                                                             {formData.file && (
                                                                 <div className="space-y-2">
                                                                     <p className="text-sm font-medium text-foreground">Current Preview</p>
@@ -495,7 +498,7 @@ export default function SubmitPage() {
                                                                 </div>
                                                             )}
 
-                                                            
+
                                                             <div className="space-y-3">
                                                                 <p className="text-sm font-medium text-foreground">Upload Image</p>
                                                                 <div className={`border-2 ${dragActive ? "border-primary bg-primary/5" : "border-input"} transition-all duration-200 border-dashed rounded-lg p-8 text-center bg-muted/30`} onDragOver={handleDragOver} onDragLeave={handleDragLeave} onDrop={handleDrop}>
@@ -508,7 +511,7 @@ export default function SubmitPage() {
                                                                 </div>
                                                             </div>
 
-                                                            
+
                                                             <div className="space-y-3">
                                                                 <p className="text-sm font-medium text-foreground">Or Load from URL</p>
                                                                 <div className="flex gap-2">
@@ -543,7 +546,7 @@ export default function SubmitPage() {
                                                                 )}
                                                             </div>
 
-                                                            
+
                                                             <div className="space-y-3 pt-4 border-t border-border">
                                                                 <p className="text-sm font-medium text-foreground">Generate from Theme URL</p>
                                                                 <Button variant="outline" onClick={() => setShowPreviewModal(true)} className="w-full">
@@ -581,10 +584,10 @@ export default function SubmitPage() {
                                                     </Card>
                                                 )}
 
-                                                
+
                                                 {step === 4 && (
                                                     <div className="space-y-6">
-                                                        
+
                                                         <Card className="p-8 bg-card/90 border border-border rounded-2xl shadow-lg">
                                                             <div className="mb-8">
                                                                 <h2 className="text-2xl font-bold mb-2">Theme Contributors</h2>
@@ -595,7 +598,7 @@ export default function SubmitPage() {
                                                             </div>
                                                         </Card>
 
-                                                        
+
                                                         <Card className="p-8 bg-card/90 border border-border rounded-2xl shadow-lg">
                                                             <div className="mb-8">
                                                                 <h2 className="text-2xl font-bold mb-2">Theme Source</h2>

@@ -66,7 +66,7 @@ async function POST(req: NextApiRequest, res: NextApiResponse) {
             });
         }
 
-        
+
         await pendingCollection.updateOne(
             { _id: new ObjectId(id as string) },
             {
@@ -87,7 +87,7 @@ async function POST(req: NextApiRequest, res: NextApiResponse) {
             }
         );
 
-        
+
         await notificationsCollection.insertOne({
             userId: theme.submittedBy,
             type: "theme_rejected",
@@ -99,7 +99,7 @@ async function POST(req: NextApiRequest, res: NextApiResponse) {
             read: false
         });
 
-        
+
         if (banUser) {
             await usersCollection.updateOne(
                 { "user.id": theme.submittedBy },

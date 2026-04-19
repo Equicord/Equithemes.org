@@ -290,13 +290,13 @@ export default function ThemeList({ id, rejectReason }) {
                                 <div className="flex flex-col gap-4">
                                     <div className="flex items-start justify-between">
                                         <div className="space-y-1">
-                                                <CardTitle className="text-3xl font-bold">{theme?.title}</CardTitle>
+                                            <CardTitle className="text-3xl font-bold">{theme?.title}</CardTitle>
                                             <div className="flex items-center gap-2 text-muted-foreground">
-                                                    <span>Submitted {theme?.submittedAt && formatDistanceToNow(new Date(theme.submittedAt))} ago</span>
+                                                <span>Submitted {theme?.submittedAt && formatDistanceToNow(new Date(theme.submittedAt))} ago</span>
                                             </div>
                                         </div>
-                                            <Badge variant="outline" className={cn("text-sm px-3 py-1", theme?.state === "approved" && "bg-green-500/10 text-green-600 border-green-500/20", theme?.state === "rejected" && "bg-red-500/10 text-red-600 border-red-500/20", theme?.state === "pending" && "bg-yellow-500/10 text-yellow-600 border-yellow-500/20")}>
-                                                {theme?.state === "approved" ? "Approved" : theme?.state === "rejected" ? "Rejected" : "Pending Review"}
+                                        <Badge variant="outline" className={cn("text-sm px-3 py-1", theme?.state === "approved" && "bg-green-500/10 text-green-600 border-green-500/20", theme?.state === "rejected" && "bg-red-500/10 text-red-600 border-red-500/20", theme?.state === "pending" && "bg-yellow-500/10 text-yellow-600 border-yellow-500/20")}>
+                                            {theme?.state === "approved" ? "Approved" : theme?.state === "rejected" ? "Rejected" : "Pending Review"}
                                         </Badge>
                                     </div>
                                 </div>
@@ -316,8 +316,8 @@ export default function ThemeList({ id, rejectReason }) {
 
                                         <div>
                                             <h3 className="text-xl font-semibold mb-4">Theme Preview</h3>
-                                                {theme?.file ? (
-                                                    <img src={theme.fileUrl} alt={theme.title} className="rounded-lg border border-muted shadow-sm w-full hover:shadow-md transition-shadow" />
+                                            {theme?.file ? (
+                                                <img src={theme.fileUrl} alt={theme.title} className="rounded-lg border border-muted shadow-sm w-full hover:shadow-md transition-shadow" />
                                             ) : (
                                                 <div className="rounded-lg border border-muted bg-muted/30 h-48 flex items-center justify-center">
                                                     <p className="text-muted-foreground">No preview available</p>
@@ -329,10 +329,10 @@ export default function ThemeList({ id, rejectReason }) {
                                             <h3 className="text-xl font-semibold mb-4">Theme Content</h3>
                                             <div className="rounded-lg border border-muted bg-muted/30 p-4 relative">
                                                 <pre className="text-sm overflow-auto max-h-[400px]">
-                                                        <code>{Buffer.from(theme?.themeContent || "", "base64").toString()}</code>
+                                                    <code>{Buffer.from(theme?.themeContent || "", "base64").toString()}</code>
                                                 </pre>
                                             </div>
-                                                <a href={theme?.sourceLink} target="_blank" rel="noopener noreferrer" className="inline-flex items-center gap-2 mt-2 text-sm text-muted-foreground hover:text-primary transition-colors">
+                                            <a href={theme?.sourceLink} target="_blank" rel="noopener noreferrer" className="inline-flex items-center gap-2 mt-2 text-sm text-muted-foreground hover:text-primary transition-colors">
                                                 <OpenInNew sx={{ width: 16, height: 16 }} />
                                                 View source code
                                             </a>
@@ -344,7 +344,7 @@ export default function ThemeList({ id, rejectReason }) {
                                                 <div>
                                                     <h3 className="text-xl font-semibold mb-4">Contributors</h3>
                                                     <div className="flex flex-wrap gap-2">
-                                                            {Object.values(theme?.validatedUsers || {}).map((user: any) => (
+                                                        {Object.values(theme?.validatedUsers || {}).map((user: any) => (
                                                             <div key={user.id} className="inline-flex items-center gap-2 bg-muted/30 rounded-full px-3 py-1">
                                                                 <img src={`https://cdn.discordapp.com/avatars/${user.id}/${user.avatar}.png`} alt={user.username} className="w-6 h-6 rounded-full" />
                                                                 <span className="text-sm">{user.username}</span>
@@ -353,7 +353,7 @@ export default function ThemeList({ id, rejectReason }) {
                                                     </div>
                                                 </div>
 
-                                                    {theme?.state === "pending" && (
+                                                {theme?.state === "pending" && (
                                                     <>
                                                         <div>
                                                             <h3 className="text-xl font-semibold mb-4">Theme Tags</h3>
@@ -421,12 +421,13 @@ export default function ThemeList({ id, rejectReason }) {
 
                                                                 {banUser && (
                                                                     <div>
-                                                                        <label htmlFor="ban-reason" className="text-sm font-medium mb-2 block">Ban Reason</label>
+                                                                        <label htmlFor="ban-reason" className="text-sm font-medium mb-2 block">Ban Reason <span className="text-xs text-muted-foreground">({banReason.length}/40)</span></label>
                                                                         <input
                                                                             id="ban-reason"
                                                                             type="text"
                                                                             value={banReason}
-                                                                            onChange={(e) => setBanReason(e.target.value)}
+                                                                            onChange={(e) => setBanReason(e.target.value.slice(0, 40))}
+                                                                            maxLength={40}
                                                                             placeholder="e.g., Policy violation, spam..."
                                                                             className="w-full h-9 px-2 border border-muted rounded-lg bg-muted/30 text-sm focus:outline-none focus:ring-1 focus:ring-primary"
                                                                         />
@@ -446,16 +447,16 @@ export default function ThemeList({ id, rejectReason }) {
                                                     </>
                                                 )}
 
-                                                    {theme?.state !== "pending" && (
-                                                        <Alert variant={theme.state === "approved" ? "default" : "destructive"}>
-                                                            <p>
-                                                                This theme has been {theme.state} and cannot be modified.
-                                                                {rejectReason && (
-                                                                    <div>
-                                                                        <>Reason: {rejectReason.endsWith('.') ? rejectReason : `${rejectReason}.`}</>
-                                                                    </div>
-                                                                )}
-                                                            </p>
+                                                {theme?.state !== "pending" && (
+                                                    <Alert variant={theme.state === "approved" ? "default" : "destructive"}>
+                                                        <p>
+                                                            This theme has been {theme.state} and cannot be modified.
+                                                            {rejectReason && (
+                                                                <div>
+                                                                    <>Reason: {rejectReason.endsWith('.') ? rejectReason : `${rejectReason}.`}</>
+                                                                </div>
+                                                            )}
+                                                        </p>
                                                     </Alert>
                                                 )}
                                             </div>
