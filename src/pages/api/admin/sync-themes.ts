@@ -1,9 +1,7 @@
+import { ErrorHandler } from "@lib/errorHandler";
 import clientPromise from "@utils/db";
 import type { NextApiRequest, NextApiResponse } from "next";
 import { isAuthed } from "@utils/auth";
-import { ErrorHandler } from "@lib/errorHandler";
-import fs from "fs";
-import path from "path";
 
 async function POST(req: NextApiRequest, res: NextApiResponse) {
     if (req.method !== "POST") {
@@ -29,37 +27,12 @@ async function POST(req: NextApiRequest, res: NextApiResponse) {
     }
 
     try {
-        const themesJsonPath = path.join(process.cwd(), "themes.json");
-        const themesData = JSON.parse(fs.readFileSync(themesJsonPath, "utf8"));
-
         const client = await clientPromise;
         const themesDb = client.db("themesDatabase");
-        const themesCollection = themesDb.collection("themesDatabase");
+        const themesCollection = themesDb.collection("themes");
 
-        let approvedUpdated = 0;
-        let approvedInserted = 0;
-        const approvedUpdates = [];
-
-        for (const theme of themesData) {
-            if (!theme.id) {
-                console.warn(`Skipping theme without id: ${theme.name}`);
-                continue;
-            }
-
-            approvedUpdates.push({
-                updateOne: {
-                    filter: { id: theme.id },
-                    update: { $set: { name: theme.name } },
-                    upsert: true
-                }
-            });
-        }
-
-        if (approvedUpdates.length > 0) {
-            const result = await themesCollection.bulkWrite(approvedUpdates);
-            approvedUpdated = result.modifiedCount || 0;
-            approvedInserted = result.upsertedCount || 0;
-        }
+        const themes = await themesCollection.find({}, { projection: { _id: 0 } }).toArray();
+        const approvedTotal = themes.length;
 
         const submittedDb = client.db("submittedThemesDatabase");
         const pendingCollection = submittedDb.collection("pending");
@@ -84,13 +57,15 @@ async function POST(req: NextApiRequest, res: NextApiResponse) {
             submissionsUpdated = result.modifiedCount || 0;
         }
 
+        res.setHeader("Cache-Control", "no-cache, no-store, must-revalidate");
+        res.setHeader("Pragma", "no-cache");
+        res.setHeader("Expires", "0");
+
         return res.status(200).json({
             status: 200,
             message: "Database sync completed successfully",
             approved: {
-                updated: approvedUpdated,
-                inserted: approvedInserted,
-                total: themesData.length
+                total: approvedTotal
             },
             submissions: {
                 updated: submissionsUpdated,
