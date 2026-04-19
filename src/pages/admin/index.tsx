@@ -107,6 +107,8 @@ export default function AdminDashboard() {
 	const [announcementTitle, setAnnouncementTitle] = useState("");
 	const [announcementMessage, setAnnouncementMessage] = useState("");
 	const [isSubmittingAnnouncement, setIsSubmittingAnnouncement] = useState(false);
+	const [isSyncingThemes, setIsSyncingThemes] = useState(false);
+	const [syncResult, setSyncResult] = useState<any>(null);
 
 	useEffect(() => {
 		if (!isLoading && (!isAuthenticated || !authorizedUser?.admin)) {
@@ -253,6 +255,41 @@ export default function AdminDashboard() {
 		}
 	};
 
+	const handleSyncThemes = async () => {
+		setIsSyncingThemes(true);
+		setSyncResult(null);
+		try {
+			const token = getCookie("_dtoken");
+			const response = await fetch("/api/admin/sync-themes", {
+				method: "POST",
+				headers: {
+					"Content-Type": "application/json",
+					Authorization: `Bearer ${token}`
+				}
+			});
+
+			if (!response.ok) {
+				throw new Error(response.statusText);
+			}
+
+			const data = await response.json();
+			setSyncResult(data);
+			toast({
+				title: "Success",
+				description: `Synced ${data.approved?.total || 0} approved themes and updated ${data.submissions?.updated || 0} submissions`,
+				variant: "default"
+			});
+		} catch (error) {
+			toast({
+				title: "Error",
+				description: error.message || "Failed to sync themes",
+				variant: "destructive"
+			});
+		} finally {
+			setIsSyncingThemes(false);
+		}
+	};
+
 	const formatBytes = (bytes: number) => {
 		if (bytes === 0) return "0 Bytes";
 		const k = 1024;
@@ -272,9 +309,9 @@ export default function AdminDashboard() {
 				</div>
 			</div>
 
-			
+
 			<div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6 mb-8">
-				
+
 				<Card className="border-border/40">
 					<CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
 						<CardTitle className="text-sm font-medium">
@@ -286,8 +323,8 @@ export default function AdminDashboard() {
 						<div className="text-3xl font-bold">
 							{submissions?.length
 								? submissions.filter(
-										x => x.pending === "pending"
-								  )?.length
+									x => x.pending === "pending"
+								)?.length
 								: "0"}
 						</div>
 						<Button
@@ -301,7 +338,7 @@ export default function AdminDashboard() {
 					</CardContent>
 				</Card>
 
-				
+
 				<Card className="border-border/40">
 					<CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
 						<CardTitle className="text-sm font-medium">
@@ -322,7 +359,7 @@ export default function AdminDashboard() {
 					</CardContent>
 				</Card>
 
-				
+
 				<Card className="border-border/40">
 					<CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
 						<CardTitle className="text-sm font-medium">
@@ -340,7 +377,7 @@ export default function AdminDashboard() {
 					</CardContent>
 				</Card>
 
-				
+
 				<Card className="border-border/40">
 					<CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
 						<CardTitle className="text-sm font-medium">
@@ -356,9 +393,9 @@ export default function AdminDashboard() {
 				</Card>
 			</div>
 
-			
+
 			<div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
-				
+
 				<Card className="border-border/40">
 					<CardHeader className="flex flex-row items-center justify-between space-y-0">
 						<CardTitle className="text-sm font-medium">
@@ -373,7 +410,7 @@ export default function AdminDashboard() {
 					</CardContent>
 				</Card>
 
-				
+
 				<Card className="border-border/40">
 					<CardHeader className="flex flex-row items-center justify-between space-y-0">
 						<CardTitle className="text-sm font-medium">
@@ -435,7 +472,7 @@ export default function AdminDashboard() {
 
 								{searchResults && (
 									<div className="mt-6 space-y-6">
-										
+
 										<div className="flex items-center gap-4 p-4 bg-muted/50 rounded-lg border border-border/40">
 											<Avatar className="h-16 w-16">
 												<AvatarImage
@@ -462,7 +499,7 @@ export default function AdminDashboard() {
 														?.discriminator &&
 														searchResults.discord
 															.discriminator !==
-															"0" && (
+														"0" && (
 															<span className="text-muted-foreground text-sm">
 																#{
 																	searchResults
@@ -478,7 +515,7 @@ export default function AdminDashboard() {
 											</div>
 										</div>
 
-										
+
 										<div className="space-y-3 grid grid-cols-2 gap-3">
 											<div>
 												<Label htmlFor="userId">
@@ -537,12 +574,12 @@ export default function AdminDashboard() {
 															value={
 																searchResults.discord
 																	? new Date(
-																			searchResults
-																				.discord
-																				.id /
-																				4194304 +
-																				1420070400000
-																	  ).toLocaleDateString()
+																		searchResults
+																			.discord
+																			.id /
+																		4194304 +
+																		1420070400000
+																	).toLocaleDateString()
 																	: "Unknown"
 															}
 															disabled
@@ -604,23 +641,23 @@ export default function AdminDashboard() {
 
 													{searchResults.user.user
 														.githubAccount && (
-														<div className="col-span-2">
-															<Label htmlFor="githubAccount">
-																GitHub Account
-															</Label>
-															<Input
-																id="githubAccount"
-																value={
-																	searchResults
-																		.user
-																		.user
-																		.githubAccount
-																}
-																disabled
-																className="mt-1"
-															/>
-														</div>
-													)}
+															<div className="col-span-2">
+																<Label htmlFor="githubAccount">
+																	GitHub Account
+																</Label>
+																<Input
+																	id="githubAccount"
+																	value={
+																		searchResults
+																			.user
+																			.user
+																			.githubAccount
+																	}
+																	disabled
+																	className="mt-1"
+																/>
+															</div>
+														)}
 												</>
 											)}
 										</div>
@@ -632,7 +669,7 @@ export default function AdminDashboard() {
 				</Card>
 			</div>
 
-			
+
 			<div className="mt-8">
 				<Card className="border-border/40">
 					<CardHeader>
@@ -714,7 +751,50 @@ export default function AdminDashboard() {
 				</Card>
 			</div>
 
-			
+			<div className="mt-8">
+				<Card className="border-border/40">
+					<CardHeader>
+						<div className="flex items-center gap-2">
+							<DatabaseIcon className="h-5 w-5 text-muted-foreground" />
+							<div>
+								<CardTitle>Sync Database</CardTitle>
+								<CardDescription>
+									Sync theme titles and trunicate them
+								</CardDescription>
+							</div>
+						</div>
+					</CardHeader>
+					<CardContent className="space-y-4">
+						<Button
+							onClick={handleSyncThemes}
+							disabled={isSyncingThemes}
+							className="w-full"
+						>
+							{isSyncingThemes ? (
+								<>
+									<Loader2 className="h-4 w-4 mr-2 animate-spin" />
+									Syncing...
+								</>
+							) : (
+								<>
+									<DatabaseIcon className="h-4 w-4 mr-2" />
+									Sync Themes Now
+								</>
+							)}
+						</Button>
+
+						{syncResult && (
+							<div className="text-sm space-y-2 p-3 bg-muted rounded-lg">
+								<div className="font-medium">Sync Results:</div>
+								<div>Approved Themes: <span className="font-semibold">{syncResult.approved?.updated}</span> updated, <span className="font-semibold">{syncResult.approved?.total}</span> total</div>
+								<div>Submissions: <span className="font-semibold">{syncResult.submissions?.updated}</span> updated, <span className="font-semibold">{syncResult.submissions?.total}</span> total</div>
+								<div className="text-xs text-muted-foreground mt-2">{syncResult.submissions?.description}</div>
+							</div>
+						)}
+					</CardContent>
+				</Card>
+			</div>
+
 			<div className="mt-8">
 				<Card className="border-border/40">
 					<CardHeader>
