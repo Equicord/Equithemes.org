@@ -7,6 +7,26 @@ interface ParsedSourceUrl {
 
 const GITHUB_TOKEN = process.env.GITHUB_TOKEN;
 
+function isBinaryContent(content: string): boolean {
+    const binaryMarkers = ["JFIF", "Photoshop", "PNG", "GIF8", "PDF-"];
+
+    if (binaryMarkers.some(marker => content.includes(marker))) {
+        return true;
+    }
+
+    const sample = content.slice(0, 500);
+    let nonPrintable = 0;
+    for (let i = 0; i < sample.length; i++) {
+        const code = sample.charCodeAt(i);
+        if (code === 0) return true;
+        if (code < 32 && code !== 9 && code !== 10 && code !== 13) {
+            nonPrintable++;
+        }
+    }
+
+    return nonPrintable > sample.length * 0.1;
+}
+
 function isRawHtml(content: string): boolean {
     const lowerContent = content.trim().toLowerCase();
     return (
@@ -33,6 +53,10 @@ export async function parseSourceUrl(url: string): Promise<string> {
 
     if (isRawHtml(result)) {
         throw new Error("Content appears to be raw HTML. Please provide a direct link to the CSS file.");
+    }
+
+    if (isBinaryContent(result)) {
+        throw new Error("Content appears to be a binary file (image, PDF, etc.). Please provide a direct link to the CSS file.");
     }
 
     const rawContent = Buffer.from(result.trim(), "utf-8").toString("base64");
@@ -71,9 +95,9 @@ async function fetchApiContent(parsed: ParsedSourceUrl): Promise<string> {
 
     const headers = GITHUB_TOKEN
         ? {
-              Accept: "application/vnd.github+json",
-              Authorization: `Bearer ${GITHUB_TOKEN}`
-          }
+            Accept: "application/vnd.github+json",
+            Authorization: `Bearer ${GITHUB_TOKEN}`
+        }
         : {};
 
     try {
