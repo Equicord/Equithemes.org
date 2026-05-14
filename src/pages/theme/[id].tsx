@@ -26,44 +26,40 @@ export const getStaticPaths: GetStaticPaths = async () => {
 	};
 };
 
-export const getStaticProps = (async context => {
-	const res = await fetch(
-		"https://raw.githubusercontent.com/Equicord/EquiThemes.org/refs/heads/master/themes.json"
-	);
-	const themes = await res.json();
-	return { props: { themes }, revalidate: 60 };
+export const getStaticProps = (async (context) => {
+    const { id } = context.params!;
+    const res = await fetch("https://raw.githubusercontent.com/Equicord/EquiThemes.org/refs/heads/master/themes.json");
+    const themes: Theme[] = await res.json();
+    
+    const theme = themes.find(x => String(x.id) === id || x.name.toLowerCase() === (id as string).toLowerCase());
+    
+    if (!theme) {
+        return { notFound: true };
+    }
+
+    return { props: { theme }, revalidate: 60 };
 }) satisfies GetStaticProps<{
-	themes: Theme[];
+    theme: Theme;
 }>;
 
-export default function ThemePage({
-	themes
-}: InferGetStaticPropsType<typeof getStaticProps>) {
-	const router = useRouter();
-	const { id } = router.query;
+export default function ThemePage({ theme }: InferGetStaticPropsType<typeof getStaticProps>) {
+    const router = useRouter();
+    const { id } = router.query;
 
-	let theme = themes.find(x => x.id == id);
+    useEffect(() => {
+        if (!id || !theme) return;
 
-	// try to get the theme name instead
-	const validTheme =
-		!theme && typeof id === "string"
-			? themes.find(x => x.name.toLowerCase() === id.toLowerCase())
-			: null;
+        if (String(theme.id) !== id) {
+            router.replace(`/theme/${theme.id}`);
+        }
+    }, [id, theme, router]);
 
-	useEffect(() => {
-		if (!id) return;
+    if (!theme) {
+        return null;
+    }
 
-		if (validTheme) {
-			router.replace(`/theme/${validTheme.id}`);
-		} else if (!theme) {
-			router.replace("/");
-		}
-	}, [id, theme, validTheme, router]);
+    return <App id={String(theme.id)} theme={theme} />;
+}
 
-  // prevent site crashing during redirect
-	if (!theme) {
-		return null;
-	}
-
-	return <App id={id as string} theme={theme} />;
+    return <App id={String(theme.id)} theme={theme} />;
 }

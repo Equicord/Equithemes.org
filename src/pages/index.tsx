@@ -6,7 +6,10 @@ import { type Theme } from "@types";
 
 export const getStaticProps = (async () => {
     const res = await fetch("https://raw.githubusercontent.com/Equicord/EquiThemes.org/refs/heads/master/themes.json");
-    const themes = await res.json();
+    const themes = (await res.json()).map((t: Theme) => {
+        const { content, ...rest } = t;
+        return rest;
+    });
     return { props: { themes }, revalidate: 60 };
 }) satisfies GetStaticProps<{
     themes: Theme[];

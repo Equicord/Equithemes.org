@@ -45,17 +45,19 @@ function timeSince(date: Date) {
     return "Just now";
 }
 
-export function ThemeCard({ theme, likedThemes, className, noFooter = false, disableDownloads = false, diagonal = false }: ThemeCardProps) {
+export const ThemeCard = React.memo(({ theme, likedThemes, className, noFooter = false, disableDownloads = false, diagonal = false }: ThemeCardProps) => {
     const [isLiked, setLiked] = useState(false);
     const [isOpen, setIsOpen] = useState(false);
     const [isDownloaded, setIsDownloaded] = useState(false);
 
     useEffect(() => {
         if (likedThemes?.likes?.length) {
-            const hasLiked = likedThemes.likes.some((liked) => liked.themeId === theme.id);
+            const hasLiked = likedThemes.likes.some((liked: any) => liked.themeId === theme.id && liked.hasLiked !== false);
             setLiked(hasLiked);
+        } else {
+            setLiked(false);
         }
-    }, [likedThemes, theme]);
+    }, [likedThemes, theme.id]);
 
     const handleDownload = async (e: MouseEvent) => {
         e.preventDefault();
@@ -79,7 +81,7 @@ export function ThemeCard({ theme, likedThemes, className, noFooter = false, dis
     };
 
     const lastUpdated = theme.last_updated ?? theme.release_date;
-    const relativeTime = timeSince(new Date(lastUpdated));
+    const relativeTime = React.useMemo(() => timeSince(new Date(lastUpdated)), [lastUpdated]);
 
     return (
         <Card className={cn("group overflow-hidden flex flex-col h-full transition-all duration-200 hover:shadow-lg hover:-translate-y-1 border-border/40 bg-card/50 backdrop-blur-sm", className)}>
@@ -88,7 +90,7 @@ export function ThemeCard({ theme, likedThemes, className, noFooter = false, dis
                     <div className="flex">
                         <div className="w-1/2 relative" onMouseLeave={handleMouseLeave}>
                             <div className="aspect-[16/9] overflow-hidden bg-muted/20 relative rounded-2xl">
-                                <Image unoptimized draggable={false} priority width={854} height={480} src={theme.thumbnail_url} alt={theme.name} className="absolute inset-0 h-full w-full object-cover transition-transform duration-500 group-hover:scale-105 select-none rounded-2xl" />
+                                <Image draggable={false} width={854} height={480} src={theme.thumbnail_url} alt={theme.name} className="absolute inset-0 h-full w-full object-cover transition-transform duration-500 group-hover:scale-105 select-none rounded-2xl" />
                             </div>
                             <div className="absolute top-3 left-3 z-2 flex flex-wrap gap-2">
                                 {theme.tags?.slice(0, 3).map((tag) => (
@@ -181,7 +183,7 @@ export function ThemeCard({ theme, likedThemes, className, noFooter = false, dis
                     <>
                         <CardHeader className="p-0 relative" onMouseLeave={handleMouseLeave}>
                             <div className="aspect-[16/9] overflow-hidden bg-muted/20 relative rounded-t-2xl">
-                                <Image unoptimized draggable={false} priority width={854} height={480} src={theme.thumbnail_url} alt={theme.name} className="absolute inset-0 h-full w-full object-cover transition-transform duration-500 group-hover:scale-105 select-none" />
+                                <Image draggable={false} width={854} height={480} src={theme.thumbnail_url} alt={theme.name} className="absolute inset-0 h-full w-full object-cover transition-transform duration-500 group-hover:scale-105 select-none" />
                             </div>
                             <div className="absolute bottom-3 left-3 z-2 flex flex-wrap gap-2">
                                 {theme.tags?.slice(0, 3).map((tag) => (
@@ -255,4 +257,6 @@ export function ThemeCard({ theme, likedThemes, className, noFooter = false, dis
             </Link>
         </Card>
     );
-}
+});
+
+ThemeCard.displayName = "ThemeCard";

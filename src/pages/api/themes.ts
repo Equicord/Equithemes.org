@@ -11,7 +11,7 @@ async function GET(req: NextApiRequest, res: NextApiResponse) {
     const db = client.db("themesDatabase");
     const themesCollection = db.collection("themes");
 
-    const themes = await themesCollection.find({}, { projection: { _id: 0 } }).toArray();
+    const themes = await themesCollection.find({}, { projection: { _id: 0, content: 0 } }).toArray();
 
     
     res.setHeader("Cache-Control", "no-cache, no-store, must-revalidate");

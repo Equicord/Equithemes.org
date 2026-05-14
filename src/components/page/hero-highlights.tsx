@@ -12,7 +12,7 @@ export default function HeroHighlights({ themes }: { themes: Theme[] }) {
                 {highlights.slice(0, 4).map((t) => (
                     <Link key={t.id} href={`/theme/${t.id}`} className="group block overflow-hidden rounded-2xl bg-card/60 border border-border/30 hover:shadow-lg transition-shadow">
                         <div className="aspect-[16/9] relative">
-                            <Image src={t.thumbnail_url} alt={t.name} unoptimized draggable={false} fill className="object-cover group-hover:scale-105 transition-transform" />
+                            <Image src={t.thumbnail_url} alt={t.name} draggable={false} fill className="object-cover group-hover:scale-105 transition-transform" />
                         </div>
                         <div className="p-3">
                             <div className="text-sm font-semibold text-primary truncate">{t.name}</div>
@@ -26,7 +26,7 @@ export default function HeroHighlights({ themes }: { themes: Theme[] }) {
                 {highlights.map((t) => (
                     <Link key={t.id} href={`/theme/${t.id}`} className="w-64 flex-shrink-0 rounded-xl overflow-hidden bg-card/60 border border-border/30">
                         <div className="aspect-[16/9] relative">
-                            <Image src={t.thumbnail_url} alt={t.name} unoptimized draggable={false} fill className="object-cover" />
+                            <Image src={t.thumbnail_url} alt={t.name} draggable={false} fill className="object-cover" />
                         </div>
                         <div className="p-3">
                             <div className="text-sm font-semibold text-primary truncate">{t.name}</div>

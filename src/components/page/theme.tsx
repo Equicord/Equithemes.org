@@ -64,6 +64,7 @@ function App({ themes }: { themes: Theme[] }) {
     const { authorizedUser, isAuthenticated, isLoading, error } = useWebContext();
     const [showScrollTop, setShowScrollTop] = useState(false);
     const [scrolled, setScrolled] = useState(false);
+    const deferredQuery = React.useDeferredValue(searchQuery);
 
     useEffect(() => {
         const handleScroll = () => {
@@ -116,78 +117,81 @@ function App({ themes }: { themes: Theme[] }) {
         }
     }, [isLoading, authorizedUser, isAuthenticated]);
 
-    const allFilters = isLoading
-        ? []
-        : [
-              ...themes.reduce((acc, theme) => {
-                  theme.tags.forEach((tag) => acc.set(tag, (acc.get(tag) || 0) + 1));
-                  return acc;
-              }, new Map())
-          ]
-              .sort(([, countA], [, countB]) => countB - countA)
-              .map(([tag]) => ({
-                  value: tag,
-                  label: tag.charAt(0).toUpperCase() + tag.slice(1)
-              }));
+    const allFilters = React.useMemo(() => {
+        if (isLoading) return [];
+        return [
+            ...themes.reduce((acc, theme) => {
+                theme.tags.forEach((tag) => acc.set(tag, (acc.get(tag) || 0) + 1));
+                return acc;
+            }, new Map())
+        ]
+            .sort(([, countA], [, countB]) => countB - countA)
+            .map(([tag]) => ({
+                value: tag,
+                label: tag.charAt(0).toUpperCase() + tag.slice(1)
+            }));
+    }, [themes, isLoading]);
 
-    const themesOnly = themes.filter((t) => t.type === "theme");
-    const snippetsOnly = themes.filter((t) => t.type === "snippet");
+    const { themesOnly, snippetsOnly } = React.useMemo(() => ({
+        themesOnly: themes.filter((t) => t.type === "theme"),
+        snippetsOnly: themes.filter((t) => t.type === "snippet")
+    }), [themes]);
 
     // Most popular themes for header highlights (sorted by downloads desc)
-    const popularThemes = [...themesOnly]
+    const popularThemes = React.useMemo(() => [...themesOnly]
         .map((t) => ({ ...t, downloads: t.downloads ?? 0 }))
         .sort((a, b) => b.downloads - a.downloads)
-        .slice(0, 6);
+        .slice(0, 6), [themesOnly]);
 
-    const filteredThemes = isLoading
-        ? []
-        : themesOnly
-              .filter((t) => {
-                  t.downloads === undefined ? (t.downloads = 0) : (t.downloads = t.downloads);
-                  t.likes === undefined ? (t.likes = 0) : (t.likes = t.likes);
-                  const match = t.name.toLowerCase().includes(searchQuery.toLowerCase()) || t.description.toLowerCase().includes(searchQuery.toLowerCase());
-                  const tags = filters.length === 0 || filters.every((f) => t.tags.includes(f.value));
-                  return match && tags;
-              })
-              .sort((a, b) => {
-                  switch (sort) {
-                      case "most-liked":
-                          return b.likes - a.likes;
-                      case "most-popular":
-                          return b.downloads - a.downloads;
-                      case "recently-updated":
-                          return +new Date(b.last_updated) - +new Date(a.last_updated);
-                      case "recently-uploaded":
-                          return +new Date(b.release_date) - +new Date(a.release_date);
-                      default:
-                          return b.likes - a.likes;
-                  }
-              });
+    const lowerQuery = deferredQuery.toLowerCase();
 
-    const filteredSnippets = isLoading
-        ? []
-        : snippetsOnly
-              .filter((t) => {
-                  t.downloads === undefined ? (t.downloads = 0) : (t.downloads = t.downloads);
-                  t.likes === undefined ? (t.likes = 0) : (t.likes = t.likes);
-                  const match = t.name.toLowerCase().includes(searchQuery.toLowerCase()) || t.description.toLowerCase().includes(searchQuery.toLowerCase());
-                  const tags = filters.length === 0 || filters.every((f) => t.tags.includes(f.value));
-                  return match && tags;
-              })
-              .sort((a, b) => {
-                  switch (sort) {
-                      case "most-liked":
-                          return b.likes - a.likes;
-                      case "most-popular":
-                          return b.downloads - a.downloads;
-                      case "recently-updated":
-                          return +new Date(b.last_updated) - +new Date(a.last_updated);
-                      case "recently-uploaded":
-                          return +new Date(b.release_date) - +new Date(a.release_date);
-                      default:
-                          return b.likes - a.likes;
-                  }
-              });
+    const filteredThemes = React.useMemo(() => {
+        if (isLoading) return [];
+        return themesOnly
+            .filter((t) => {
+                const match = t.name.toLowerCase().includes(lowerQuery) || t.description.toLowerCase().includes(lowerQuery);
+                const tags = filters.length === 0 || filters.every((f) => t.tags.includes(f.value));
+                return match && tags;
+            })
+            .sort((a, b) => {
+                switch (sort) {
+                    case "most-liked":
+                        return (b.likes ?? 0) - (a.likes ?? 0);
+                    case "most-popular":
+                        return (b.downloads ?? 0) - (a.downloads ?? 0);
+                    case "recently-updated":
+                        return +new Date(b.last_updated ?? b.release_date) - +new Date(a.last_updated ?? a.release_date);
+                    case "recently-uploaded":
+                        return +new Date(b.release_date) - +new Date(a.release_date);
+                    default:
+                        return (b.likes ?? 0) - (a.likes ?? 0);
+                }
+            });
+    }, [themesOnly, lowerQuery, filters, sort, isLoading]);
+
+    const filteredSnippets = React.useMemo(() => {
+        if (isLoading) return [];
+        return snippetsOnly
+            .filter((t) => {
+                const match = t.name.toLowerCase().includes(lowerQuery) || t.description.toLowerCase().includes(lowerQuery);
+                const tags = filters.length === 0 || filters.every((f) => t.tags.includes(f.value));
+                return match && tags;
+            })
+            .sort((a, b) => {
+                switch (sort) {
+                    case "most-liked":
+                        return (b.likes ?? 0) - (a.likes ?? 0);
+                    case "most-popular":
+                        return (b.downloads ?? 0) - (a.downloads ?? 0);
+                    case "recently-updated":
+                        return +new Date(b.last_updated ?? b.release_date) - +new Date(a.last_updated ?? a.release_date);
+                    case "recently-uploaded":
+                        return +new Date(b.release_date) - +new Date(a.release_date);
+                    default:
+                        return (b.likes ?? 0) - (a.likes ?? 0);
+                }
+            });
+    }, [snippetsOnly, lowerQuery, filters, sort, isLoading]);
 
     const handleSubmit = () => {
         if (isValid) {

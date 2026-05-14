@@ -375,7 +375,7 @@ export default function Component({ id, theme }: { id?: string; theme: Theme }) 
                                     <Card className="overflow-hidden border-border/40 mb-4">
                                         <CardContent className="p-0">
                                             <div className="bg-muted/20 rounded-2xl flex justify-center items-center overflow-hidden aspect-video">
-                                                <Image unoptimized draggable={false} src={theme.thumbnail_url} alt={theme.name} width={1920} height={1080} className="object-cover w-full h-full" priority />
+                                                <Image draggable={false} src={theme.thumbnail_url} alt={theme.name} width={1920} height={1080} className="object-cover w-full h-full" priority />
                                             </div>
                                         </CardContent>
                                     </Card>
