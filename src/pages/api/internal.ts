@@ -29,12 +29,6 @@ async function GET(req: NextApiRequest, res: NextApiResponse) {
     const themesColl = db.collection("themes");
     const likesColl = db.collection("likes");
 
-    const usersCursor = usersColl.aggregate(agg);
-    const usersResult = await usersCursor.toArray();
-
-    const themesCursor = themesColl.aggregate([{ $count: "total" }]);
-    const themesResult = await themesCursor.toArray();
-
     const authorAgg = [
         {
             $group: {
@@ -54,10 +48,6 @@ async function GET(req: NextApiRequest, res: NextApiResponse) {
         }
     ];
 
-    const authorCursor = themesColl.aggregate(authorAgg);
-    const authorResult = await authorCursor.toArray();
-    const topAuthor = authorResult[0] || { _id: null, themeCount: 0, themes: [] };
-
     const downloadsAgg = [
         {
             $group: {
@@ -66,10 +56,6 @@ async function GET(req: NextApiRequest, res: NextApiResponse) {
             }
         }
     ];
-
-    const downloadsCursor = themesColl.aggregate(downloadsAgg);
-    const downloadsResult = await downloadsCursor.toArray();
-    const totalDownloads = downloadsResult[0]?.totalDownloads || 0;
 
     const likesAgg = [
         {
@@ -88,16 +74,27 @@ async function GET(req: NextApiRequest, res: NextApiResponse) {
         }
     ];
 
-    const likesCursor = likesColl.aggregate(likesAgg);
-    const likesResult = await likesCursor.toArray();
+    const submittedDb = client.db("submittedThemesDatabase");
+    const pendingColl = submittedDb.collection("pending");
+
+    const [usersResult, themesResult, authorResult, downloadsResult, likesResult, dbStats, serverStatus, pendingCount] = await Promise.all([
+        usersColl.aggregate(agg).toArray(),
+        themesColl.aggregate([{ $count: "total" }]).toArray(),
+        themesColl.aggregate(authorAgg).toArray(),
+        themesColl.aggregate(downloadsAgg).toArray(),
+        likesColl.aggregate(likesAgg).toArray(),
+        db.stats(),
+        db.command({ serverStatus: 1 }),
+        pendingColl.countDocuments({ state: "pending" })
+    ]);
+
+    const topAuthor = authorResult[0] || { _id: null, themeCount: 0, themes: [] };
+    const totalDownloads = downloadsResult[0]?.totalDownloads || 0;
     const mostLikedTheme = likesResult[0]?.themeId || null;
 
     const totalUsers = usersResult[0].totalUsers[0]?.total || 0;
     const monthlyUsers = usersResult[0].monthlyUsers[0]?.total || 0;
     const totalThemes = themesResult[0]?.total || 0;
-
-    const dbStats = await db.stats();
-    const serverStatus = await db.command({ serverStatus: 1 });
 
     const data = {
         users: {
@@ -110,6 +107,7 @@ async function GET(req: NextApiRequest, res: NextApiResponse) {
         themes: {
             total: totalThemes,
             totalDownloads: totalDownloads,
+            pendingSubmissions: pendingCount,
             topAuthor: {
                 discord_snowflake: topAuthor._id,
                 themeCount: topAuthor.themeCount

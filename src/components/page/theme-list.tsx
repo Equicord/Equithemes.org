@@ -37,10 +37,10 @@ interface Theme {
     submittedBy: string;
 }
 
-function ThemeList() {
+function ThemeList({ initialThemes }: { initialThemes?: Theme[] }) {
     const { authorizedUser, isAuthenticated, isLoading } = useWebContext();
-    const [themes, setThemes] = useState<Theme[]>([]);
-    const [loading, setLoading] = useState(true);
+    const [themes, setThemes] = useState<Theme[]>(initialThemes || []);
+    const [loading, setLoading] = useState(!initialThemes);
     const [error, setError] = useState<string | null>(null);
     const [search, setSearch] = useState("");
     const [filter, setFilter] = useState("all");
@@ -67,13 +67,15 @@ function ThemeList() {
     };
 
     useEffect(() => {
-        if (!isAuthenticated || !authorizedUser?.admin) {
-            window.location.href = "/";
+        if (!isAuthenticated || !authorizedUser?.admin || initialThemes) {
+            if (!isLoading && (!isAuthenticated || !authorizedUser?.admin)) {
+                window.location.href = "/";
+            }
             return;
         }
 
         fetchThemes();
-    }, [isAuthenticated, authorizedUser]);
+    }, [isAuthenticated, authorizedUser, isLoading, initialThemes]);
 
     const filteredThemes = themes.filter((theme) => {
         const matchesSearch = theme.title.toLowerCase().includes(search.toLowerCase()) || Object.values(theme.validatedUsers).some((user) => user.username.toLowerCase().includes(search.toLowerCase()));

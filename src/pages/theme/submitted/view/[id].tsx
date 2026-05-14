@@ -18,6 +18,7 @@ import remarkGfm from "remark-gfm";
 import { cn } from "@lib/utils";
 import clientPromise from "@utils/db";
 import { ObjectId } from "mongodb";
+import { getUser } from "@utils/auth";
 
 interface Theme {
     _id: string;
@@ -38,7 +39,7 @@ interface Theme {
     submittedBy: string;
 }
 
-export async function getServerSideProps({ params }) {
+export async function getServerSideProps({ params, req }) {
     if (!params?.id) {
         return { notFound: true };
     }
@@ -46,32 +47,50 @@ export async function getServerSideProps({ params }) {
     const client = await clientPromise;
     const db = client.db("submittedThemesDatabase");
 
-    let doc = null;
+    const cookieHeader = req.headers.cookie || "";
+    const getCookieServer = (name: string) => {
+        const value = "; " + cookieHeader;
+        const parts = value.split("; " + name + "=");
+        if (parts.length === 2) return parts.pop()?.split(";").shift();
+        return undefined;
+    };
+
+    const token = getCookieServer("_dtoken");
+    const user = await getUser(token || "");
+
     try {
-        doc = await db
-            .collection("pending")
-            .findOne(
-                { _id: new ObjectId(params.id), state: "rejected" },
-                { projection: { reason: 1, _id: 0 } }
-            );
+        const theme = await db.collection("pending").findOne({ _id: new ObjectId(params.id) });
+        if (!theme) return { notFound: true };
+
+        const isAdmin = user?.admin || false;
+        const isOwner = user?.username === theme.user;
+
+        if (!isAdmin && !isOwner) {
+            return {
+                redirect: {
+                    destination: "/",
+                    permanent: false,
+                },
+            };
+        }
+
+        return {
+            props: {
+                id: params.id,
+                initialTheme: JSON.parse(JSON.stringify(theme)),
+            },
+        };
     } catch (err) {
-        console.error("Invalid ObjectId:", err);
+        console.error("Error in getServerSideProps:", err);
         return { notFound: true };
     }
-
-    return {
-        props: {
-            id: params.id,
-            rejectReason: doc?.reason || null,
-        },
-    };
 }
 
-export default function ThemeList({ id, rejectReason }) {
+export default function ThemeList({ id, initialTheme }: { id: string; initialTheme: Theme }) {
     const { authorizedUser, isAuthenticated, isLoading } = useWebContext();
     const router = useRouter();
-    const [theme, setTheme] = useState<Theme>();
-    const [loading, setLoading] = useState(true);
+    const [theme, setTheme] = useState<Theme>(initialTheme);
+    const [loading, setLoading] = useState(!initialTheme);
     const [selectedTags, setSelectedTags] = useState<string[]>([]);
     const [newTag, setNewTag] = useState("");
     const [suggestedTags, setSuggestedTags] = useState<string[]>([]);
@@ -180,21 +199,23 @@ export default function ThemeList({ id, rejectReason }) {
             img.onload = () => {
                 const canvas = document.createElement("canvas");
                 const ctx = canvas.getContext("2d");
-                canvas.width = img.width;
-                canvas.height = img.height;
-                ctx?.drawImage(img, 0, 0);
+                canvas.width = 100;
+                canvas.height = 100;
+                ctx?.drawImage(img, 0, 0, 100, 100);
 
-                const imageData = ctx?.getImageData(0, 0, canvas.width, canvas.height);
+                const imageData = ctx?.getImageData(0, 0, 100, 100);
                 if (!imageData) return resolve([]);
 
                 let brightness = 0;
-                for (let i = 0; i < imageData.data.length; i += 4) {
-                    brightness += (imageData.data[i] + imageData.data[i + 1] + imageData.data[i + 2]) / 3;
+                const data = imageData.data;
+                for (let i = 0; i < data.length; i += 4) {
+                    brightness += (data[i] + data[i + 1] + data[i + 2]) / 3;
                 }
-                brightness = brightness / (imageData.data.length / 4);
+                brightness = brightness / (data.length / 4);
 
                 resolve([brightness < 128 ? "dark" : "light"]);
             };
+            img.onerror = () => resolve([]);
             img.src = imageUrl;
         });
     };
@@ -230,28 +251,22 @@ export default function ThemeList({ id, rejectReason }) {
     }, [isAuthenticated, authorizedUser, isLoading]);
 
     useEffect(() => {
-        if (!id || !isAuthenticated) return;
+        if (!id || !isAuthenticated || theme) return;
 
         const fetchThemes = async () => {
             try {
-                const response = await fetch("/api/get/submissions", {
+                const response = await fetch(`/api/get/submissions?id=${id}`, {
                     headers: {
                         Authorization: `Bearer ${getCookie("_dtoken")}`
                     }
                 });
 
                 if (!response.ok) {
-                    throw new Error("Failed to fetch themes");
+                    throw new Error("Failed to fetch theme");
                 }
 
                 const data = await response.json();
-                const theme = data.find((theme) => theme._id === id);
-
-                if (!theme) {
-                    throw new Error("Theme not found");
-                }
-
-                setTheme(theme);
+                setTheme(data);
             } catch (err) {
                 console.error(err);
                 window.location.href = "/theme/submitted";
@@ -261,7 +276,7 @@ export default function ThemeList({ id, rejectReason }) {
         };
 
         fetchThemes();
-    }, [isAuthenticated, authorizedUser, isLoading, id]);
+    }, [isAuthenticated, authorizedUser, isLoading, id, theme]);
 
     if (isLoading || loading) {
         return (
@@ -451,9 +466,9 @@ export default function ThemeList({ id, rejectReason }) {
                                                     <Alert variant={theme.state === "approved" ? "default" : "destructive"}>
                                                         <p>
                                                             This theme has been {theme.state} and cannot be modified.
-                                                            {rejectReason && (
+                                                            {theme?.reason && (
                                                                 <div>
-                                                                    <>Reason: {rejectReason.endsWith('.') ? rejectReason : `${rejectReason}.`}</>
+                                                                    <>Reason: {theme.reason.endsWith('.') ? theme.reason : `${theme.reason}.`}</>
                                                                 </div>
                                                             )}
                                                         </p>

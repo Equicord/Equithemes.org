@@ -74,17 +74,20 @@ async function POST(req: NextApiRequest, res: NextApiResponse) {
                         message: "Failed to fetch source link"
                     });
                 }
-            } catch (error) {
+            } catch (error: any) {
                 console.error("Source parse error:", error);
                 return res.status(400).json({
                     status: 400,
-                    message: "Failed to parse source link"
+                    message: error.message || "Failed to parse source link"
                 });
             }
         }
 
         const submission = {
             ...req.body,
+            title: req.body.title.trim(),
+            description: req.body.description.trim(),
+            sourceLink: req.body.sourceLink.trim(),
             themeContent,
             fileUrl: req.body.file && req.body.file.startsWith('data:image') ? req.body.file : (req.body.fileUrl || `${SERVER}/not-found/image.png`),
             file: req.body.file && req.body.file.startsWith('data:image') ? req.body.file : (req.body.fileUrl || `${SERVER}/not-found/image.png`),

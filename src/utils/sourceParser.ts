@@ -8,13 +8,14 @@ interface ParsedSourceUrl {
 const GITHUB_TOKEN = process.env.GITHUB_TOKEN;
 
 function isRawHtml(content: string): boolean {
-    const trimmed = content.trim().toLowerCase();
+    const lowerContent = content.trim().toLowerCase();
     return (
-        trimmed.startsWith("<!DOCTYPE") ||
-        trimmed.startsWith("<html") ||
-        trimmed.startsWith("<head") ||
-        trimmed.startsWith("<body") ||
-        trimmed.startsWith("<?xml")
+        lowerContent.includes("<!doctype html") ||
+        lowerContent.includes("<html") ||
+        lowerContent.includes("<head") ||
+        lowerContent.includes("<body") ||
+        lowerContent.includes("<?xml") ||
+        lowerContent.includes("<script")
     );
 }
 
@@ -34,7 +35,7 @@ export async function parseSourceUrl(url: string): Promise<string> {
         throw new Error("Content appears to be raw HTML. Please provide a direct link to the CSS file.");
     }
 
-    const rawContent = Buffer.from(result, "utf-8").toString("base64");
+    const rawContent = Buffer.from(result.trim(), "utf-8").toString("base64");
     return rawContent;
 }
 

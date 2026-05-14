@@ -50,6 +50,7 @@ interface InternalStats {
 	themes: {
 		total: number;
 		totalDownloads: number;
+		pendingSubmissions: number;
 		topAuthor: {
 			discord_snowflake: string;
 			themeCount: number;
@@ -137,23 +138,8 @@ export default function AdminDashboard() {
 				} else {
 					router.push("/");
 				}
-
-				const submissionsResponse = await fetch(
-					"/api/get/submissions",
-					{
-						headers: {
-							Authorization: `Bearer ${token}`
-						}
-					}
-				);
-
-				if (submissionsResponse.ok) {
-					const data = await submissionsResponse.json();
-					setSubmissions(data);
-				} else {
-					console.error(submissionsResponse);
-				}
-			} catch {
+			} catch (error) {
+				console.error("Error fetching admin data:", error);
 				router.push("/");
 			} finally {
 				setLoading(false);
@@ -321,11 +307,7 @@ export default function AdminDashboard() {
 					</CardHeader>
 					<CardContent className="space-y-3">
 						<div className="text-3xl font-bold">
-							{submissions?.length
-								? submissions.filter(
-									x => x.pending === "pending"
-								)?.length
-								: "0"}
+							{stats?.themes.pendingSubmissions ?? "0"}
 						</div>
 						<Button
 							size="sm"

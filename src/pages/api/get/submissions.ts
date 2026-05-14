@@ -1,33 +1,34 @@
 import clientPromise from "@utils/db";
+import { ObjectId } from "mongodb";
 import type { NextApiRequest, NextApiResponse } from "next";
 import { isAuthed } from "@utils/auth";
 import { ErrorHandler } from "@lib/errorHandler";
 export interface ValidatedUser {
-	id: string;
-	username: string;
-	avatar: string;
+    id: string;
+    username: string;
+    avatar: string;
 }
 
 export interface SubmittedAt {
-	$date: string;
+    $date: string;
 }
 
 export interface Moderator {
-	discord_snowflake: string;
-	discord_name: string;
-	avatar_url: string;
+    discord_snowflake: string;
+    discord_name: string;
+    avatar_url: string;
 }
 
 export interface RootObject {
-	title: string;
-	description: string;
-	sourceLink: string;
-	validatedUsers: { [key: string]: ValidatedUser };
-	themeContent: string;
-	submittedAt: SubmittedAt;
+    title: string;
+    description: string;
+    sourceLink: string;
+    validatedUsers: { [key: string]: ValidatedUser };
+    themeContent: string;
+    submittedAt: SubmittedAt;
     reason: string;
-	state: string;
-	moderator: Moderator;
+    state: string;
+    moderator: Moderator;
 }
 
 async function GET(req: NextApiRequest, res: NextApiResponse) {
@@ -57,11 +58,25 @@ async function GET(req: NextApiRequest, res: NextApiResponse) {
         return res.status(401).json({ status: 401, message: "Given token is not authorized" });
     }
 
-    let themes = await themesCollection.find({}).toArray();
+    const { id } = req.query;
 
-    if (!user.admin) {
-        themes = themes.filter((theme) => theme.user === user.username);
+    if (id) {
+        try {
+            const theme = await themesCollection.findOne({ _id: new ObjectId(id as string) });
+            if (!theme) {
+                return res.status(404).json({ message: "Submission not found" });
+            }
+            if (!user.admin && theme.user !== user.username) {
+                return res.status(403).json({ message: "Forbidden" });
+            }
+            return res.status(200).json(theme);
+        } catch (err) {
+            return res.status(400).json({ message: "Invalid ID format" });
+        }
     }
+
+    const query = user.admin ? {} : { user: user.username };
+    const themes = await themesCollection.find(query, { projection: { themeContent: 0, file: 0, fileUrl: 0 } }).toArray();
 
     res.setHeader("Content-Type", "application/json");
     res.setHeader("Cache-Control", "no-store");
