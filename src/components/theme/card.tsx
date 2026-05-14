@@ -4,7 +4,7 @@ import { Card, CardContent, CardFooter, CardHeader } from "@components/ui/card";
 import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from "@components/ui/tooltip";
 import { Button } from "@components/ui/button";
 import { cn } from "@lib/utils";
-import { MouseEvent, useEffect, useState } from "react";
+import { MouseEvent, useEffect, useState, useMemo, memo } from "react";
 import { type Theme } from "@types";
 import Link from "next/link";
 import ReactMarkdown from "react-markdown";
@@ -45,7 +45,7 @@ function timeSince(date: Date) {
     return "Just now";
 }
 
-export const ThemeCard = React.memo(({ theme, likedThemes, className, noFooter = false, disableDownloads = false, diagonal = false }: ThemeCardProps) => {
+export const ThemeCard = memo(({ theme, likedThemes, className, noFooter = false, disableDownloads = false, diagonal = false }: ThemeCardProps) => {
     const [isLiked, setLiked] = useState(false);
     const [isOpen, setIsOpen] = useState(false);
     const [isDownloaded, setIsDownloaded] = useState(false);
@@ -81,7 +81,7 @@ export const ThemeCard = React.memo(({ theme, likedThemes, className, noFooter =
     };
 
     const lastUpdated = theme.last_updated ?? theme.release_date;
-    const relativeTime = React.useMemo(() => timeSince(new Date(lastUpdated)), [lastUpdated]);
+    const relativeTime = useMemo(() => timeSince(new Date(lastUpdated)), [lastUpdated]);
 
     return (
         <Card className={cn("group overflow-hidden flex flex-col h-full transition-all duration-200 hover:shadow-lg hover:-translate-y-1 border-border/40 bg-card/50 backdrop-blur-sm", className)}>

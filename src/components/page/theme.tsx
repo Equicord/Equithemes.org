@@ -3,20 +3,19 @@
 import React, { useEffect, useState } from "react";
 import { ThemeGrid } from "@components/theme/grid";
 import { Button } from "@components/ui/button";
-import { FilterDropdown } from "@components/ui/filter-dropdown";
-import { ArrowUp, Plus, SearchX, Info, ExternalLinkIcon, Sparkles } from "lucide-react";
+import { ArrowUp, Plus, SearchX, Info, ExternalLinkIcon } from "lucide-react";
 import { getCookie } from "@utils/cookies";
 import { type UserData } from "@types";
 import { useWebContext } from "@context/auth";
 import ThemeCarousel from "@components/theme/carousel";
 import HeroHighlights from "@components/page/hero-highlights";
-import { DropdownFilter } from "@components/ui/dropdown-filter";
+
 import { useSearch } from "@context/search";
 import { Alert, AlertDescription, AlertTitle } from "@components/ui/alert";
 import { type Theme } from "@types";
 import { Tabs, TabsList, TabsTrigger, TabsContent } from "@components/ui/tabs";
 import { DiscordIcon } from "@utils/icons";
-import { Badge } from "@components/ui/badge";
+
 
 const Skeleton = ({ className = "", ...props }) => <div className={`animate-pulse bg-muted/30 rounded ${className}`} {...props} />;
 
@@ -56,21 +55,17 @@ const NoResults = () => (
 );
 
 function App({ themes }: { themes: Theme[] }) {
-    const { searchQuery, setSearchQuery } = useSearch();
+    const { searchQuery } = useSearch();
     const [isValid, setUser] = useState<UserData | boolean>(false);
-    const [filters, setFilters] = useState([]);
     const [likedThemes, setLikedThemes] = useState([]);
-    const [sort, setSort] = useState("most-popular");
     const { authorizedUser, isAuthenticated, isLoading, error } = useWebContext();
     const [showScrollTop, setShowScrollTop] = useState(false);
-    const [scrolled, setScrolled] = useState(false);
     const deferredQuery = React.useDeferredValue(searchQuery);
 
     useEffect(() => {
         const handleScroll = () => {
             const scrollPos = window.scrollY;
             setShowScrollTop(scrollPos > 300);
-            setScrolled(scrollPos > 150);
         };
 
         window.addEventListener("scroll", handleScroll);
@@ -117,20 +112,7 @@ function App({ themes }: { themes: Theme[] }) {
         }
     }, [isLoading, authorizedUser, isAuthenticated]);
 
-    const allFilters = React.useMemo(() => {
-        if (isLoading) return [];
-        return [
-            ...themes.reduce((acc, theme) => {
-                theme.tags.forEach((tag) => acc.set(tag, (acc.get(tag) || 0) + 1));
-                return acc;
-            }, new Map())
-        ]
-            .sort(([, countA], [, countB]) => countB - countA)
-            .map(([tag]) => ({
-                value: tag,
-                label: tag.charAt(0).toUpperCase() + tag.slice(1)
-            }));
-    }, [themes, isLoading]);
+
 
     const { themesOnly, snippetsOnly } = React.useMemo(() => ({
         themesOnly: themes.filter((t) => t.type === "theme"),
@@ -150,48 +132,20 @@ function App({ themes }: { themes: Theme[] }) {
         return themesOnly
             .filter((t) => {
                 const match = t.name.toLowerCase().includes(lowerQuery) || t.description.toLowerCase().includes(lowerQuery);
-                const tags = filters.length === 0 || filters.every((f) => t.tags.includes(f.value));
-                return match && tags;
+                return match;
             })
-            .sort((a, b) => {
-                switch (sort) {
-                    case "most-liked":
-                        return (b.likes ?? 0) - (a.likes ?? 0);
-                    case "most-popular":
-                        return (b.downloads ?? 0) - (a.downloads ?? 0);
-                    case "recently-updated":
-                        return +new Date(b.last_updated ?? b.release_date) - +new Date(a.last_updated ?? a.release_date);
-                    case "recently-uploaded":
-                        return +new Date(b.release_date) - +new Date(a.release_date);
-                    default:
-                        return (b.likes ?? 0) - (a.likes ?? 0);
-                }
-            });
-    }, [themesOnly, lowerQuery, filters, sort, isLoading]);
+            .sort((a, b) => (b.downloads ?? 0) - (a.downloads ?? 0));
+    }, [themesOnly, lowerQuery, isLoading]);
 
     const filteredSnippets = React.useMemo(() => {
         if (isLoading) return [];
         return snippetsOnly
             .filter((t) => {
                 const match = t.name.toLowerCase().includes(lowerQuery) || t.description.toLowerCase().includes(lowerQuery);
-                const tags = filters.length === 0 || filters.every((f) => t.tags.includes(f.value));
-                return match && tags;
+                return match;
             })
-            .sort((a, b) => {
-                switch (sort) {
-                    case "most-liked":
-                        return (b.likes ?? 0) - (a.likes ?? 0);
-                    case "most-popular":
-                        return (b.downloads ?? 0) - (a.downloads ?? 0);
-                    case "recently-updated":
-                        return +new Date(b.last_updated ?? b.release_date) - +new Date(a.last_updated ?? a.release_date);
-                    case "recently-uploaded":
-                        return +new Date(b.release_date) - +new Date(a.release_date);
-                    default:
-                        return (b.likes ?? 0) - (a.likes ?? 0);
-                }
-            });
-    }, [snippetsOnly, lowerQuery, filters, sort, isLoading]);
+            .sort((a, b) => (b.downloads ?? 0) - (a.downloads ?? 0));
+    }, [snippetsOnly, lowerQuery, isLoading]);
 
     const handleSubmit = () => {
         if (isValid) {

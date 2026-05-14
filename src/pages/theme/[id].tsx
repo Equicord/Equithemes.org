@@ -3,36 +3,36 @@
 import { useRouter } from "next/router";
 import { useEffect } from "react";
 import type {
-	GetStaticPaths,
-	GetStaticProps,
-	InferGetStaticPropsType
+    GetStaticPaths,
+    GetStaticProps,
+    InferGetStaticPropsType
 } from "next";
 import App from "@components/page/theme-info";
 import { type Theme } from "@types";
 
 export const getStaticPaths: GetStaticPaths = async () => {
-	const res = await fetch(
-		"https://raw.githubusercontent.com/Equicord/EquiThemes.org/refs/heads/master/themes.json"
-	);
-	const themes = await res.json();
+    const res = await fetch(
+        "https://raw.githubusercontent.com/Equicord/EquiThemes.org/refs/heads/master/themes.json"
+    );
+    const themes = await res.json();
 
-	const paths = themes.map((theme: Theme) => ({
-		params: { id: String(theme.id) }
-	}));
+    const paths = themes.map((theme: Theme) => ({
+        params: { id: String(theme.id) }
+    }));
 
-	return {
-		paths,
-		fallback: "blocking"
-	};
+    return {
+        paths,
+        fallback: "blocking"
+    };
 };
 
 export const getStaticProps = (async (context) => {
     const { id } = context.params!;
     const res = await fetch("https://raw.githubusercontent.com/Equicord/EquiThemes.org/refs/heads/master/themes.json");
     const themes: Theme[] = await res.json();
-    
+
     const theme = themes.find(x => String(x.id) === id || x.name.toLowerCase() === (id as string).toLowerCase());
-    
+
     if (!theme) {
         return { notFound: true };
     }
@@ -57,9 +57,6 @@ export default function ThemePage({ theme }: InferGetStaticPropsType<typeof getS
     if (!theme) {
         return null;
     }
-
-    return <App id={String(theme.id)} theme={theme} />;
-}
 
     return <App id={String(theme.id)} theme={theme} />;
 }
