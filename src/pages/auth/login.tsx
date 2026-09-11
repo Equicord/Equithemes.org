@@ -3,19 +3,21 @@ import { useRouter } from "next/router";
 import Head from "next/head";
 import { SERVER } from "@constants";
 
-const redirect = `https://discord.com/oauth2/authorize?client_id=${process.env.AUTH_DISCORD_ID}&response_type=code&redirect_uri=${SERVER}/api/user/auth?callback={CALLBACK}&scope=connections%20identify`;
+interface AuthCallbackProps {
+    clientId: string;
+}
 
-export default function AuthCallback() {
+export default function AuthCallback({ clientId }: AuthCallbackProps) {
     const router = useRouter();
 
     useEffect(() => {
         if (typeof window !== "undefined") {
             const callback = (router.query?.callback as string) ?? "/auth/callback";
-            const finalRedirect = redirect.replace("{CALLBACK}", encodeURIComponent(callback));
+            const finalRedirect = `https://discord.com/oauth2/authorize?client_id=${clientId}&response_type=code&redirect_uri=${SERVER}/api/user/auth?callback=${encodeURIComponent(callback)}&scope=connections%20identify`;
 
             router.replace(finalRedirect);
         }
-    }, [router]);
+    }, [router, clientId]);
 
     return (
         <>
@@ -47,6 +49,5 @@ export default function AuthCallback() {
 }
 
 export async function getServerSideProps() {
-    // Ensure this page is always server-side rendered
-    return { props: {} };
+    return { props: { clientId: process.env.AUTH_DISCORD_ID ?? null } };
 }
